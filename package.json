@@ -9,7 +9,7 @@
     "connect-initial-props": "^1.0.0",
     "keccak": "^3.0.2",
     "keccak256": "^1.0.6",
-    "merkletreejs": "^0.2.27",
+    "merkletreejs": "^0.2.30",
     "next": "^12.1.0",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.1",

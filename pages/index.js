@@ -10,6 +10,8 @@ import FAQ from './components/FAQ';
 import BTS from './components/BTS';
 import Creators from './components/Creators';
 import Footer from './components/Footer';
+import Whitelist from './lib/merkleRoot.js';
+
 
 
 const App = () => {
@@ -19,10 +21,11 @@ const App = () => {
   const [claimingNft, setClaimingNft] = useState(false);
   const [feedback, setFeedback] = useState(`Click buy to mint your NFT.`);
   const [mintAmount, setMintAmount] = useState(1);
+  
 
   const [CONFIG, SET_CONFIG] = useState({
-    CONTRACT_ADDRESS: "0xe4FA1e27e30c736C98c29BC9D8C7C0ed1c9F8173",
-    SCAN_LINK: "https://rinkeby.etherscan.io/address/0xe4FA1e27e30c736C98c29BC9D8C7C0ed1c9F8173",
+    CONTRACT_ADDRESS: "0xd2f546B2686014f72e09f8E3894b9722748Ac806",
+    SCAN_LINK: "https://rinkeby.etherscan.io/address/0xd2f546B2686014f72e09f8E3894b9722748Ac806",
     NETWORK: {
       NAME: "Rinkeby",
       SYMBOL: "ETH",
@@ -31,7 +34,7 @@ const App = () => {
     NFT_NAME: "Dystopia.Earth TEST Ch. 1",
     SYMBOL: "DET",
     MAX_SUPPLY: 15,
-    BATCHSIZE: 9,
+    BATCHSIZE: 3,
     WEI_COST: 1000000000000000,
     DISPLAY_COST: 0.01,
     // GAS_LIMIT: 285000,
@@ -40,9 +43,37 @@ const App = () => {
     SHOW_BACKGROUND: false,
   });
 
+  const whitelistClaim = () => {
+    let cost = CONFIG.WEI_COST;
+    let totalCostWei = String(cost * mintAmount);
+    setFeedback(`Minting your ${CONFIG.NFT_NAME}...`);
+    setClaimingNft(true);
+  
+      blockchain.smartContract.methods
+      .whitelistMint(mintAmount, Whitelist.getProofForAddress(blockchain.account))
+      .send({
+        to: CONFIG.CONTRACT_ADDRESS,
+        from: blockchain.account,
+        value: totalCostWei,
+      })
+      .once("error", (err) => {
+        console.log(err);
+        setFeedback("Transaction failed. Please try again with higher gas or wait for later.");
+        setClaimingNft(false);
+      })
+      .then((receipt) => {
+        console.log(receipt);
+        setFeedback(
+          `Congratulations, the ${CONFIG.NFT_NAME} now belongs to you! Check it out on Opensea!`
+        );
+        setClaimingNft(false);
+        dispatch(fetchData(blockchain.account));
+      });
+  };
+
   const claimNFTs = () => {
     let cost = CONFIG.WEI_COST;
-    let gasLimit = CONFIG.GAS_LIMIT;
+    // let gasLimit = CONFIG.GAS_LIMIT;
     let totalCostWei = String(cost * mintAmount);
     // let totalGasLimit = String(gasLimit * mintAmount);
     console.log("Cost: ", totalCostWei);
@@ -50,8 +81,7 @@ const App = () => {
     setFeedback(`Minting your ${CONFIG.NFT_NAME}...`);
     setClaimingNft(true);
 
-    
-
+  
     blockchain.smartContract.methods
       .mint(mintAmount)
       .send({
@@ -189,7 +219,7 @@ const App = () => {
 
             <div className="row justify-content-center border-bottom py-2 my-4">
               <div className="col-12 my-2">
-                <button id="connect-button" className="w-100 col btn btn-primary btnConnect mt-3" onClick={(e) => { e.preventDefault(); getData(); claimNFTs(); }}> {claimingNft ? "BUSY" : "MINT"} </button>
+                <button id="connect-button" className="w-100 col btn btn-primary btnConnect mt-3" onClick={(e) => { e.preventDefault(); getData(); whitelistClaim(); }}> {claimingNft ? "BUSY" : "MINT"} </button>
               </div>
             </div>
                 </>
